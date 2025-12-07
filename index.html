@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <title>上下班打卡记录器</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>上下班打卡记录器</h1>
+
+        <!-- 打卡按钮 -->
+        <button id="clickButton" class="click-button">打卡</button>
+
+        <!-- 统计信息面板 -->
+        <div class="stats-panel">
+            <div class="stat-item">
+                <div class="stat-label">本周加班</div>
+                <div id="weekOvertime" class="stat-value">0:00</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">本月加班</div>
+                <div id="monthOvertime" class="stat-value">0:00</div>
+            </div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div id="timeRecords" class="time-records">
+            <h2>打卡记录</h2>
+            <div id="recordsList" class="records-list"></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
