@@ -23,6 +23,9 @@ class TimeRecorder {
         // 绑定标签页事件
         this.initTabs();
 
+        // 启动数字时钟
+        this.startDigitalClock();
+
         // 加载保存的记录
         this.loadRecords();
 
@@ -31,6 +34,46 @@ class TimeRecorder {
 
         // 更新统计显示
         this.updateStatsDisplay();
+    }
+
+    // 启动数字时钟
+    startDigitalClock() {
+        this.timeDisplay = document.getElementById('currentTime');
+        this.dateDisplay = document.getElementById('currentDate');
+
+        // 立即更新一次
+        this.updateDigitalClock();
+
+        // 每秒更新一次
+        setInterval(() => {
+            this.updateDigitalClock();
+        }, 1000);
+    }
+
+    // 更新数字时钟显示
+    updateDigitalClock() {
+        const now = new Date();
+
+        // 更新时间
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timeString = `${hours}:${minutes}:${seconds}`;
+
+        // 更新日期
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const weekdayName = this.getWeekdayName(now);
+        const dateString = `${year}-${month}-${day} ${weekdayName}`;
+
+        // 更新显示
+        if (this.timeDisplay) {
+            this.timeDisplay.textContent = timeString;
+        }
+        if (this.dateDisplay) {
+            this.dateDisplay.textContent = dateString;
+        }
     }
 
     // 初始化标签页功能

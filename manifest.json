@@ -1,6 +1,6 @@
 {
-    "name": "上下班打卡记录器",
-    "short_name": "打卡记录器",
+    "name": "数字时钟",
+    "short_name": "数字时钟",
     "description": "一个简单的PWA应用，用于记录上下班打卡时间",
     "start_url": "/OT/",
     "display": "standalone",
