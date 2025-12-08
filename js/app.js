@@ -384,12 +384,13 @@ class TimeRecorder {
         // 生成月度详情HTML
         const monthDetailsHtml = monthRecords.map(record => {
             const dateStr = record.date;
+            const weekdayName = this.getWeekdayName(record.dateObj);
             const overtimeDisplay = this.formatTimeDisplay(record.overtimeMinutes);
             const overtimeClass = this.getOvertimeClass(record.overtimeMinutes);
 
             return `
                 <div class="month-record-item">
-                    <div class="month-record-date">${dateStr}</div>
+                    <div class="month-record-date">${dateStr} ${weekdayName}</div>
                     <div class="month-record-overtime ${overtimeClass}">${overtimeDisplay}</div>
                 </div>
             `;
@@ -408,6 +409,12 @@ class TimeRecorder {
         `;
 
         this.monthRecordsList.innerHTML = monthDetailsHtml + summaryHtml;
+    }
+
+    // 获取中文星期几
+    getWeekdayName(date) {
+        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        return weekdays[date.getDay()];
     }
 
     // 获取加班时间的CSS类名
