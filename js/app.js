@@ -91,16 +91,24 @@ class TimeRecorder {
 
     // 计算加班时间（分钟）
     calculateOvertime(dayRecords, dateKey) {
-        // 如果不是工作日，返回0
         const date = new Date(dateKey + 'T00:00:00');
-        if (!this.isWorkday(date)) {
-            return 0;
-        }
+        const dayOfWeek = date.getDay(); // 0=周日, 1=周一, ..., 6=周六
 
         // 如果没有完整的打卡记录（上班和下班），返回0
         if (!dayRecords.first || !dayRecords.last) {
             return 0;
         }
+
+        const actualStartTime = new Date(dayRecords.first.date);
+        const actualEndTime = new Date(dayRecords.last.date);
+
+        // 周末（周六、周日）的计算规则：直接计算下班时间 - 上班时间
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+            const weekendWorkMinutes = this.calculateTimeDifference(actualStartTime, actualEndTime);
+            return weekendWorkMinutes;
+        }
+
+        // 工作日（周一至周五）的计算规则
 
         const actualStartTime = new Date(dayRecords.first.date);
         const actualEndTime = new Date(dayRecords.last.date);
