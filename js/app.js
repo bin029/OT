@@ -9,6 +9,7 @@ class TimeRecorder {
     init() {
         this.button = document.getElementById('clickButton');
         this.clearButton = document.getElementById('clearButton');
+        this.clearAllButton = document.getElementById('clearAllButton');
         this.recordsList = document.getElementById('recordsList');
         this.weekOvertimeEl = document.getElementById('weekOvertime');
         this.monthOvertimeEl = document.getElementById('monthOvertime');
@@ -16,6 +17,7 @@ class TimeRecorder {
         // 绑定事件监听器
         this.button.addEventListener('click', () => this.recordClick());
         this.clearButton.addEventListener('click', () => this.clearTodayRecords());
+        this.clearAllButton.addEventListener('click', () => this.clearAllRecords());
 
         // 加载保存的记录
         this.loadRecords();
@@ -95,6 +97,24 @@ class TimeRecorder {
             }
         }
 
+        this.saveRecords();
+        this.renderRecords();
+        this.updateStatsDisplay();
+    }
+
+    // 清除全部打卡记录
+    clearAllRecords() {
+        // 显示确认对话框
+        const confirmed = confirm('确定要清除所有打卡记录吗？此操作不可恢复！');
+        if (!confirmed) {
+            return;
+        }
+
+        // 清除所有记录
+        this.records = {};
+        this.clickCount = 0;
+
+        // 保存空的记录
         this.saveRecords();
         this.renderRecords();
         this.updateStatsDisplay();
