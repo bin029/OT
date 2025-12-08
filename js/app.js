@@ -110,9 +110,6 @@ class TimeRecorder {
 
         // 工作日（周一至周五）的计算规则
 
-        const actualStartTime = new Date(dayRecords.first.date);
-        const actualEndTime = new Date(dayRecords.last.date);
-
         // 标准上班时间：9:00
         const standardStartTime = new Date(dateKey + 'T09:00:00');
         // 加班开始时间：18:30
