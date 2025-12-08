@@ -82,9 +82,14 @@ h1 {
     font-size: 24px;
 }
 
+.button-group {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
 .click-button {
-    display: block;
-    width: 100%;
+    flex: 1;
     padding: 15px 30px;
     background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     color: white;
@@ -93,7 +98,18 @@ h1 {
     font-size: 18px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-bottom: 30px;
+}
+
+.clear-button {
+    flex: 1;
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .click-button:hover {

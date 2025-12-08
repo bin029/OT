@@ -8,12 +8,14 @@ class TimeRecorder {
 
     init() {
         this.button = document.getElementById('clickButton');
+        this.clearButton = document.getElementById('clearButton');
         this.recordsList = document.getElementById('recordsList');
         this.weekOvertimeEl = document.getElementById('weekOvertime');
         this.monthOvertimeEl = document.getElementById('monthOvertime');
 
         // 绑定事件监听器
         this.button.addEventListener('click', () => this.recordClick());
+        this.clearButton.addEventListener('click', () => this.clearTodayRecords());
 
         // 加载保存的记录
         this.loadRecords();
@@ -63,6 +65,34 @@ class TimeRecorder {
                 date: now.toISOString(),
                 type: 'last'
             };
+        }
+
+        this.saveRecords();
+        this.renderRecords();
+        this.updateStatsDisplay();
+    }
+
+    // 清除当日打卡记录
+    clearTodayRecords() {
+        const today = new Date();
+        const todayKey = this.getDateKey(today);
+        const todayRecords = this.records[todayKey];
+
+        if (!todayRecords) {
+            // 今日没有记录，不做任何操作
+            return;
+        }
+
+        // 如果有下班记录，先清除下班记录
+        if (todayRecords.last) {
+            delete todayRecords.last;
+        } else if (todayRecords.first) {
+            // 如果只有上班记录，清除上班记录
+            delete todayRecords.first;
+            // 如果删除后记录为空，删除整个日期记录
+            if (Object.keys(todayRecords).length === 0) {
+                delete this.records[todayKey];
+            }
         }
 
         this.saveRecords();
