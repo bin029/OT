@@ -23,15 +23,15 @@ body {
 .time-display {
     font-size: 48px;
     font-weight: bold;
-    color: white;
+    color: #2c3e50;
     font-family: 'Courier New', monospace;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: none;
     margin-bottom: 10px;
 }
 
 .date-display {
     font-size: 18px;
-    color: rgba(255, 255, 255, 0.9);
+    color: #34495e;
     font-weight: 500;
 }
 
@@ -111,7 +111,7 @@ h1 {
 .button-group {
     display: flex;
     gap: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .click-button {
