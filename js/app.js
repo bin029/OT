@@ -104,20 +104,42 @@ class TimeRecorder {
 
     // 清除全部打卡记录
     clearAllRecords() {
+        console.log('=== 开始清除全部记录 ===');
+
         // 显示确认对话框
-        const confirmed = confirm('确定要清除所有打卡记录吗？此操作不可恢复！');
+        const confirmed = window.confirm ? window.confirm('确定要清除所有打卡记录吗？此操作不可恢复！') : true;
+        console.log('用户确认结果:', confirmed);
+
         if (!confirmed) {
+            console.log('用户取消了清除操作');
             return;
         }
+
+        console.log('开始清除数据...');
 
         // 清除所有记录
         this.records = {};
         this.clickCount = 0;
 
-        // 保存空的记录
-        this.saveRecords();
+        console.log('数据已清除，records:', this.records);
+        console.log('clickCount:', this.clickCount);
+
+        // 强制保存空的记录到localStorage
+        try {
+            localStorage.setItem('timeRecords', JSON.stringify(this.records));
+            console.log('数据已保存到LocalStorage');
+        } catch (error) {
+            console.error('保存空数据失败:', error);
+        }
+
+        // 强制更新界面
         this.renderRecords();
         this.updateStatsDisplay();
+
+        console.log('=== 清除全部记录完成 ===');
+
+        // 显示成功提示
+        alert('所有打卡记录已清除！');
     }
 
     getDateKey(date) {
