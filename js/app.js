@@ -121,20 +121,20 @@ class TimeRecorder {
         // 计算迟到时间（上班晚于9:00的部分）
         const lateMinutes = Math.max(0, this.calculateTimeDifference(standardStartTime, actualStartTime));
 
-        // 计算实际工作时长，用于判断是否满足最低工作时长要求
-        const actualWorkMinutes = this.calculateTimeDifference(actualStartTime, actualEndTime);
-        const requiredWorkMinutes = 9 * 60; // 9小时 = 540分钟
+        // 判断下班时间是否达到18:30
+        const hasReachedOvertimeStart = actualEndTime >= overtimeStartTime;
 
-        // 如果工作时长不足9小时，使用公式：(下班时间 - 上班时间 - 9小时)
-        if (actualWorkMinutes < requiredWorkMinutes) {
+        if (hasReachedOvertimeStart) {
+            // 方案3：如果下班时间 ≥ 18:30，使用18:30以后的加班时间 - 迟到时间
+            const finalOvertimeMinutes = overtimeAfter1830 - lateMinutes;
+            return finalOvertimeMinutes;
+        } else {
+            // 方案3：如果下班时间 < 18:30，使用实际工作时长 - 9小时
+            const actualWorkMinutes = this.calculateTimeDifference(actualStartTime, actualEndTime);
+            const requiredWorkMinutes = 9 * 60; // 9小时 = 540分钟
             const finalOvertimeMinutes = actualWorkMinutes - requiredWorkMinutes;
             return finalOvertimeMinutes;
         }
-
-        // 如果工作时长足够，使用公式：18:30以后的加班时间 - 迟到时间
-        const finalOvertimeMinutes = overtimeAfter1830 - lateMinutes;
-
-        return finalOvertimeMinutes;
     }
 
     // 格式化时间显示（小时:分钟）
