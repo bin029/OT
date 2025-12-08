@@ -11,6 +11,7 @@ class TimeRecorder {
         this.clearButton = document.getElementById('clearButton');
         this.clearAllButton = document.getElementById('clearAllButton');
         this.recordsList = document.getElementById('recordsList');
+        this.monthRecordsList = document.getElementById('monthRecordsList');
         this.weekOvertimeEl = document.getElementById('weekOvertime');
         this.monthOvertimeEl = document.getElementById('monthOvertime');
 
@@ -18,6 +19,9 @@ class TimeRecorder {
         this.button.addEventListener('click', () => this.recordClick());
         this.clearButton.addEventListener('click', () => this.clearTodayRecords());
         this.clearAllButton.addEventListener('click', () => this.clearAllRecords());
+
+        // 绑定标签页事件
+        this.initTabs();
 
         // 加载保存的记录
         this.loadRecords();
@@ -27,6 +31,46 @@ class TimeRecorder {
 
         // 更新统计显示
         this.updateStatsDisplay();
+    }
+
+    // 初始化标签页功能
+    initTabs() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+                this.switchTab(tabName);
+            });
+        });
+    }
+
+    // 切换标签页
+    switchTab(tabName) {
+        // 更新按钮状态
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        tabButtons.forEach(button => {
+            if (button.getAttribute('data-tab') === tabName) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+
+        // 更新内容区域
+        tabPanes.forEach(pane => {
+            if (pane.id === tabName + 'Tab') {
+                pane.classList.add('active');
+            } else {
+                pane.classList.remove('active');
+            }
+        });
+
+        // 如果切换到月度详情，更新月度数据
+        if (tabName === 'month') {
+            this.renderMonthDetails();
+        }
     }
 
     recordClick() {
@@ -72,6 +116,12 @@ class TimeRecorder {
         this.saveRecords();
         this.renderRecords();
         this.updateStatsDisplay();
+
+        // 如果当前在月度详情标签页，也更新月度详情
+        const activeTab = document.querySelector('.tab-pane.active');
+        if (activeTab && activeTab.id === 'monthTab') {
+            this.renderMonthDetails();
+        }
     }
 
     // 清除当日打卡记录
@@ -100,6 +150,12 @@ class TimeRecorder {
         this.saveRecords();
         this.renderRecords();
         this.updateStatsDisplay();
+
+        // 如果当前在月度详情标签页，也更新月度详情
+        const activeTab = document.querySelector('.tab-pane.active');
+        if (activeTab && activeTab.id === 'monthTab') {
+            this.renderMonthDetails();
+        }
     }
 
     // 清除全部打卡记录
@@ -135,6 +191,12 @@ class TimeRecorder {
         // 强制更新界面
         this.renderRecords();
         this.updateStatsDisplay();
+
+        // 如果当前在月度详情标签页，也更新月度详情
+        const activeTab = document.querySelector('.tab-pane.active');
+        if (activeTab && activeTab.id === 'monthTab') {
+            this.renderMonthDetails();
+        }
 
         console.log('=== 清除全部记录完成 ===');
 
@@ -281,6 +343,71 @@ class TimeRecorder {
 
         this.monthOvertimeEl.textContent = this.formatTimeDisplay(monthOvertime);
         this.monthOvertimeEl.className = `stat-value ${this.getOvertimeClass(monthOvertime)}`;
+    }
+
+    // 渲染月度详情
+    renderMonthDetails() {
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+
+        const monthRecords = [];
+        const dates = Object.keys(this.records);
+
+        // 收集本月的所有记录
+        dates.forEach(dateKey => {
+            const recordDate = new Date(dateKey + 'T00:00:00');
+            if (recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear) {
+                const dayRecords = this.records[dateKey];
+                if (dayRecords) {
+                    const overtimeMinutes = this.calculateOvertime(dayRecords, dateKey);
+                    if (overtimeMinutes !== 0 || dayRecords.first || dayRecords.last) { // 只显示有记录的日期
+                        monthRecords.push({
+                            date: dateKey,
+                            dateObj: recordDate,
+                            overtimeMinutes: overtimeMinutes,
+                            hasRecords: !!(dayRecords.first || dayRecords.last)
+                        });
+                    }
+                }
+            }
+        });
+
+        // 按日期排序（最新的在前面）
+        monthRecords.sort((a, b) => b.dateObj - a.dateObj);
+
+        if (monthRecords.length === 0) {
+            this.monthRecordsList.innerHTML = '<div class="empty-message">本月暂无加班记录</div>';
+            return;
+        }
+
+        // 生成月度详情HTML
+        const monthDetailsHtml = monthRecords.map(record => {
+            const dateStr = record.date;
+            const overtimeDisplay = this.formatTimeDisplay(record.overtimeMinutes);
+            const overtimeClass = this.getOvertimeClass(record.overtimeMinutes);
+
+            return `
+                <div class="month-record-item">
+                    <div class="month-record-date">${dateStr}</div>
+                    <div class="month-record-overtime ${overtimeClass}">${overtimeDisplay}</div>
+                </div>
+            `;
+        }).join('');
+
+        // 计算月度总计
+        const totalOvertime = monthRecords.reduce((sum, record) => sum + record.overtimeMinutes, 0);
+        const totalDisplay = this.formatTimeDisplay(totalOvertime);
+        const totalClass = this.getOvertimeClass(totalOvertime);
+
+        const summaryHtml = `
+            <div class="month-summary">
+                <h4>月度总计</h4>
+                <div class="month-total ${totalClass}">${totalDisplay}</div>
+            </div>
+        `;
+
+        this.monthRecordsList.innerHTML = monthDetailsHtml + summaryHtml;
     }
 
     // 获取加班时间的CSS类名

@@ -33,10 +33,28 @@
             </div>
         </div>
 
-        <!-- 历史记录 -->
-        <div id="timeRecords" class="time-records">
-            <h2>打卡记录</h2>
-            <div id="recordsList" class="records-list"></div>
+        <!-- 标签页 -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="today">今日记录</button>
+            <button class="tab-button" data-tab="month">月度详情</button>
+        </div>
+
+        <!-- 标签页内容 -->
+        <div class="tab-content">
+            <!-- 今日记录标签页 -->
+            <div id="todayTab" class="tab-pane active">
+                <div id="timeRecords" class="time-records">
+                    <div id="recordsList" class="records-list"></div>
+                </div>
+            </div>
+
+            <!-- 月度详情标签页 -->
+            <div id="monthTab" class="tab-pane">
+                <div id="monthDetails" class="month-details">
+                    <h3>本月加班详情</h3>
+                    <div id="monthRecordsList" class="month-records-list"></div>
+                </div>
+            </div>
         </div>
     </div>
 
