@@ -135,8 +135,6 @@ class TimeRecorder {
         const finalOvertimeMinutes = overtimeAfter1830 - lateMinutes;
 
         return finalOvertimeMinutes;
-
-        return finalOvertimeMinutes;
     }
 
     // 格式化时间显示（小时:分钟）
