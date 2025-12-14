@@ -302,15 +302,12 @@ class TimeRecorder {
         const hasReachedOvertimeStart = actualEndTime >= overtimeStartTime;
 
         if (hasReachedOvertimeStart) {
-            // 方案3：如果下班时间 ≥ 18:30，使用18:30以后的加班时间 - 迟到时间
+            // 如果下班时间 ≥ 18:30，使用18:30以后的加班时间 - 迟到时间
             const finalOvertimeMinutes = overtimeAfter1830 - lateMinutes;
             return finalOvertimeMinutes;
         } else {
-            // 方案3：如果下班时间 < 18:30，使用实际工作时长 - 9小时
-            const actualWorkMinutes = this.calculateTimeDifference(actualStartTime, actualEndTime);
-            const requiredWorkMinutes = 9 * 60; // 9小时 = 540分钟
-            const finalOvertimeMinutes = actualWorkMinutes - requiredWorkMinutes;
-            return finalOvertimeMinutes;
+            // 如果下班时间 < 18:30，加班时间为0（18:30以后才算加班）
+            return 0;
         }
     }
 
@@ -334,7 +331,14 @@ class TimeRecorder {
     getWeekOvertime() {
         const today = new Date();
         const currentWeekStart = new Date(today);
-        currentWeekStart.setDate(today.getDate() - today.getDay()); // 本周周一
+        const dayOfWeek = today.getDay();
+
+        // 正确计算本周的周一日期
+        if (dayOfWeek === 0) { // 周日
+            currentWeekStart.setDate(today.getDate() - 6); // 上周一
+        } else {
+            currentWeekStart.setDate(today.getDate() - dayOfWeek + 1); // 本周一
+        }
 
         let totalMinutes = 0;
         const dates = Object.keys(this.records);
