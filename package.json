@@ -1,0 +1,21 @@
+{
+  "name": "overtime-clock",
+  "version": "1.0.0",
+  "description": "加班打卡应用",
+  "main": "js/app.js",
+  "scripts": {
+    "test": "node test-runner.js",
+    "test:browser": "open test.html",
+    "start": "python -m http.server 8000",
+    "lint": "eslint js/*.js --fix"
+  },
+  "keywords": ["overtime", "clock", "pwa"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

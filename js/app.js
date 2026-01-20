@@ -337,8 +337,10 @@ class TimeRecorder {
                     const finalOvertimeMinutes = overtimeAfter1830 - lateMinutes;
                     totalOvertimeMinutes = finalOvertimeMinutes;
                 } else {
-                    // 如果下班时间 < 18:30，加班时间为0（18:30以后才算加班）
-                    totalOvertimeMinutes = 0;
+                    // 如果下班时间 < 18:30，计算早退时间并减去迟到时间
+                    // 早退时间 = 18:30 - 下班时间
+                    const earlyLeaveMinutes = Math.max(0, this.calculateTimeDifference(actualEndTime, overtimeStartTime));
+                    totalOvertimeMinutes = -earlyLeaveMinutes - lateMinutes;
                 }
             } else {
                 // 周末且非调休日的计算规则：直接计算下班时间 - 上班时间
