@@ -315,11 +315,11 @@ window.runTimeRecorderTests = function() {
             test.assert.equal(overtime, 120, `日期: ${date} (${getDayOfWeek(date)})`);
         });
 
-        test.it('自动打卡 + 手动补录 - 加班180分钟', () => {
+        test.it('自动打卡 + 手动补录 - 加班120分钟', () => {
             const date = '2025-01-20'; // 周一
             const record = createTestRecord(date, '09:00', '19:30', 1); // 自动加班1小时 + 补录1小时
             const overtime = recorder.calculateOvertime(record, date);
-            test.assert.equal(overtime, 180, `日期: ${date} (${getDayOfWeek(date)})`);
+            test.assert.equal(overtime, 120, `日期: ${date} (${getDayOfWeek(date)})`);
         });
 
         test.it('周末补录 - 加班720分钟', () => {
