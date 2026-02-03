@@ -416,6 +416,104 @@ window.runTimeRecorderTests = function() {
             test.assert.isTrue(mondayRecord >= currentWeekStart, '周一记录应该在本周范围内');
         });
     });
+
+    test.describe('每月1日自动清空记录', () => {
+        const recorder = new MockTimeRecorder();
+
+        // 添加清空方法到MockTimeRecorder
+        recorder.clearLastMonthRecords = function() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            let lastMonth = currentMonth - 1;
+            let lastYear = currentYear;
+            if (lastMonth < 0) {
+                lastMonth = 11;
+                lastYear = currentYear - 1;
+            }
+
+            const dates = Object.keys(this.records);
+            let clearedCount = 0;
+
+            dates.forEach(dateKey => {
+                const recordDate = new Date(dateKey + 'T00:00:00');
+                if (recordDate.getMonth() === lastMonth && recordDate.getFullYear() === lastYear) {
+                    delete this.records[dateKey];
+                    clearedCount++;
+                }
+            });
+
+            return clearedCount;
+        };
+
+        recorder.clearCurrentWeekRecords = function() {
+            const now = new Date();
+            const currentWeekStart = new Date(now);
+            const dayOfWeek = now.getDay();
+
+            if (dayOfWeek === 0) {
+                currentWeekStart.setDate(now.getDate() - 6);
+            } else {
+                currentWeekStart.setDate(now.getDate() - dayOfWeek + 1);
+            }
+            currentWeekStart.setHours(0, 0, 0, 0);
+
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            const dates = Object.keys(this.records);
+            let clearedCount = 0;
+
+            dates.forEach(dateKey => {
+                const recordDate = new Date(dateKey + 'T00:00:00');
+                if (recordDate >= currentWeekStart && recordDate <= now) {
+                    const recordMonth = recordDate.getMonth();
+                    const recordYear = recordDate.getFullYear();
+                    if (recordMonth !== currentMonth || recordYear !== currentYear) {
+                        delete this.records[dateKey];
+                        clearedCount++;
+                    }
+                }
+            });
+
+            return clearedCount;
+        };
+
+        test.it('每月1日应清空上个月的所有记录', () => {
+            // 模拟：今天是2月1日，有1月的记录
+            recorder.records = {
+                '2025-01-15': createTestRecord('2025-01-15', '09:00', '18:30'),
+                '2025-01-20': createTestRecord('2025-01-20', '09:00', '19:30'),
+                '2025-02-01': createTestRecord('2025-02-01', '09:00', '18:30')
+            };
+
+            const clearedCount = recorder.clearLastMonthRecords();
+
+            // 应该清空2条1月的记录
+            test.assert.equal(clearedCount, 2, '应清空上个月的2条记录');
+            test.assert.isTrue(!recorder.records['2025-01-15'], '1月15日记录应被清空');
+            test.assert.isTrue(!recorder.records['2025-01-20'], '1月20日记录应被清空');
+            test.assert.isTrue(!!recorder.records['2025-02-01'], '2月1日记录应保留');
+        });
+
+        test.it('每月1日应清空本周跨月的记录', () => {
+            // 模拟：今天是2月1日（周六），本周一在上个月
+            recorder.records = {
+                '2025-01-27': createTestRecord('2025-01-27', '09:00', '18:30'), // 本周一（上个月）
+                '2025-01-28': createTestRecord('2025-01-28', '09:00', '18:30'), // 本周二（上个月）
+                '2025-02-01': createTestRecord('2025-02-01', '09:00', '18:30')  // 本周六（本月）
+            };
+
+            const clearedCount = recorder.clearCurrentWeekRecords();
+
+            // 应该清空本周在上个月的记录
+            test.assert.equal(clearedCount, 2, '应清空本周跨月的2条记录');
+            test.assert.isTrue(!recorder.records['2025-01-27'], '1月27日（本周一）记录应被清空');
+            test.assert.isTrue(!recorder.records['2025-01-28'], '1月28日（本周二）记录应被清空');
+            test.assert.isTrue(!!recorder.records['2025-02-01'], '2月1日（本周六）记录应保留');
+        });
+    });
     });
 
     // 输出测试完成信息

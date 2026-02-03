@@ -51,6 +51,9 @@ class TimeRecorder {
         // 检查是否需要自动同步节假日数据
         this.checkAutoSyncHolidays();
 
+        // 检查是否需要每月1日清空记录
+        this.checkMonthlyClear();
+
         // 注册Service Worker
         this.registerServiceWorker();
 
@@ -855,6 +858,114 @@ class TimeRecorder {
             console.error('同步节假日数据失败:', error);
             // 静默失败，不影响用户体验
         }
+    }
+
+    // 检查是否需要每月1日清空记录
+    checkMonthlyClear() {
+        const now = new Date();
+        const currentDay = now.getDate();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // 检查是否为每月1日
+        if (currentDay !== 1) {
+            return;
+        }
+
+        // 检查是否已经清空过本月的数据
+        const clearKey = `monthly_clear_${currentYear}_${currentMonth}`;
+        const hasCleared = localStorage.getItem(clearKey);
+
+        if (hasCleared) {
+            // 今天已经清空过了，不需要重复清空
+            return;
+        }
+
+        console.log('每月1日，自动清空上个月和本周的打卡记录...');
+
+        // 清空上个月的记录
+        this.clearLastMonthRecords();
+
+        // 清空本周的记录（如果本周跨月）
+        this.clearCurrentWeekRecords();
+
+        // 标记已经清空过
+        localStorage.setItem(clearKey, 'true');
+
+        // 保存清空后的记录
+        this.saveRecords();
+
+        // 更新显示
+        this.renderRecords();
+        this.updateStatsDisplay();
+
+        console.log('每月1日清空记录完成');
+    }
+
+    // 清空上个月的所有记录
+    clearLastMonthRecords() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // 计算上个月的年月
+        let lastMonth = currentMonth - 1;
+        let lastYear = currentYear;
+        if (lastMonth < 0) {
+            lastMonth = 11;
+            lastYear = currentYear - 1;
+        }
+
+        const dates = Object.keys(this.records);
+        let clearedCount = 0;
+
+        dates.forEach(dateKey => {
+            const recordDate = new Date(dateKey + 'T00:00:00');
+            // 检查是否在上个月
+            if (recordDate.getMonth() === lastMonth && recordDate.getFullYear() === lastYear) {
+                delete this.records[dateKey];
+                clearedCount++;
+            }
+        });
+
+        console.log(`清空上个月记录: ${clearedCount} 条`);
+    }
+
+    // 清空本周的记录（如果本周跨月）
+    clearCurrentWeekRecords() {
+        const now = new Date();
+        const currentWeekStart = new Date(now);
+        const dayOfWeek = now.getDay();
+
+        // 计算本周一的日期
+        if (dayOfWeek === 0) {
+            currentWeekStart.setDate(now.getDate() - 6);
+        } else {
+            currentWeekStart.setDate(now.getDate() - dayOfWeek + 1);
+        }
+        currentWeekStart.setHours(0, 0, 0, 0);
+
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const dates = Object.keys(this.records);
+        let clearedCount = 0;
+
+        dates.forEach(dateKey => {
+            const recordDate = new Date(dateKey + 'T00:00:00');
+            // 检查是否在本周内
+            if (recordDate >= currentWeekStart && recordDate <= now) {
+                // 检查是否在上个月（本周跨月的情况）
+                const recordMonth = recordDate.getMonth();
+                const recordYear = recordDate.getFullYear();
+                if (recordMonth !== currentMonth || recordYear !== currentYear) {
+                    delete this.records[dateKey];
+                    clearedCount++;
+                }
+            }
+        });
+
+        console.log(`清空本周跨月记录: ${clearedCount} 条`);
     }
 
     // 检查是否需要自动同步节假日数据
