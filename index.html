@@ -42,6 +42,7 @@
         <div class="tabs">
             <button class="tab-button active" data-tab="today">今日记录</button>
             <button class="tab-button" data-tab="month">月度详情</button>
+            <button class="tab-button" data-tab="history">历史记录</button>
         </div>
 
         <!-- 标签页内容 -->
@@ -58,6 +59,14 @@
                 <div id="monthDetails" class="month-details">
                     <h3>本月加班详情</h3>
                     <div id="monthRecordsList" class="month-records-list"></div>
+                </div>
+            </div>
+
+            <!-- 历史记录标签页 -->
+            <div id="historyTab" class="tab-pane">
+                <div id="historyDetails" class="history-details">
+                    <h3>最近6个月加班记录</h3>
+                    <div id="historyRecordsList" class="history-records-list"></div>
                 </div>
             </div>
 

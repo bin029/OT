@@ -601,3 +601,95 @@ h1 {
 .submit-button:active {
     transform: translateY(0);
 }
+
+/* 历史记录样式 */
+.history-details {
+    padding: 20px 0;
+}
+
+.history-details h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.history-records-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.history-record-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.history-record-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.history-record-month {
+    font-weight: 600;
+    color: #333;
+    font-size: 16px;
+}
+
+.history-record-overtime {
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+}
+
+.history-record-overtime.overtime-positive {
+    color: #28a745;
+}
+
+.history-record-overtime.overtime-negative {
+    color: #dc3545;
+}
+
+.history-record-overtime.overtime-zero {
+    color: #6c757d;
+}
+
+.history-summary {
+    margin-top: 25px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid #dee2e6;
+}
+
+.history-summary h4 {
+    margin: 0 0 12px 0;
+    color: #333;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.history-total {
+    font-size: 28px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+}
+
+.history-total.overtime-positive {
+    color: #28a745;
+}
+
+.history-total.overtime-negative {
+    color: #dc3545;
+}
+
+.history-total.overtime-zero {
+    color: #6c757d;
+}

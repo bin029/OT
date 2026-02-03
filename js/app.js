@@ -18,6 +18,7 @@ class TimeRecorder {
         this.cancelManualOvertime = document.getElementById('cancelManualOvertime');
         this.recordsList = document.getElementById('recordsList');
         this.monthRecordsList = document.getElementById('monthRecordsList');
+        this.historyRecordsList = document.getElementById('historyRecordsList');
         this.weekOvertimeEl = document.getElementById('weekOvertime');
         this.monthOvertimeEl = document.getElementById('monthOvertime');
 
@@ -138,6 +139,11 @@ class TimeRecorder {
         // 如果切换到月度详情，更新月度数据
         if (tabName === 'month') {
             this.renderMonthDetails();
+        }
+
+        // 如果切换到历史记录，更新历史数据
+        if (tabName === 'history') {
+            this.renderHistoryDetails();
         }
     }
 
@@ -532,6 +538,88 @@ class TimeRecorder {
         `;
 
         this.monthRecordsList.innerHTML = monthDetailsHtml + summaryHtml;
+    }
+
+    // 获取最近6个月的加班时间
+    getLast6MonthsOvertime() {
+        const today = new Date();
+        const months = [];
+
+        // 获取最近6个月
+        for (let i = 0; i < 6; i++) {
+            const date = new Date(today);
+            date.setMonth(today.getMonth() - i);
+            const month = date.getMonth();
+            const year = date.getFullYear();
+
+            let totalMinutes = 0;
+            const dates = Object.keys(this.records);
+
+            // 计算该月的总加班时间
+            dates.forEach(dateKey => {
+                const recordDate = new Date(dateKey + 'T00:00:00');
+                if (recordDate.getMonth() === month && recordDate.getFullYear() === year) {
+                    const dayRecords = this.records[dateKey];
+                    if (dayRecords) {
+                        totalMinutes += this.calculateOvertime(dayRecords, dateKey);
+                    }
+                }
+            });
+
+            months.push({
+                year: year,
+                month: month,
+                monthName: this.getMonthName(month),
+                totalMinutes: totalMinutes
+            });
+        }
+
+        return months;
+    }
+
+    // 获取月份名称
+    getMonthName(month) {
+        const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', 
+                           '七月', '八月', '九月', '十月', '十一月', '十二月'];
+        return monthNames[month];
+    }
+
+    // 渲染历史记录详情
+    renderHistoryDetails() {
+        const months = this.getLast6MonthsOvertime();
+
+        if (months.length === 0) {
+            this.historyRecordsList.innerHTML = '<div class="empty-message">暂无历史记录</div>';
+            return;
+        }
+
+        // 生成历史记录HTML
+        const historyHtml = months.map(monthData => {
+            const overtimeDisplay = this.formatTimeDisplay(monthData.totalMinutes);
+            const overtimeClass = this.getOvertimeClass(monthData.totalMinutes);
+            const monthLabel = `${monthData.year}年${monthData.monthName}`;
+
+            return `
+                <div class="history-record-item">
+                    <div class="history-record-month">${monthLabel}</div>
+                    <div class="history-record-overtime ${overtimeClass}">${overtimeDisplay}</div>
+                </div>
+            `;
+        }).join('');
+
+        // 计算6个月总计
+        const totalMinutes = months.reduce((sum, month) => sum + month.totalMinutes, 0);
+        const totalDisplay = this.formatTimeDisplay(totalMinutes);
+        const totalClass = this.getOvertimeClass(totalMinutes);
+
+        const summaryHtml = `
+            <div class="history-summary">
+                <h4>6个月总计</h4>
+                <div class="history-total ${totalClass}">${totalDisplay}</div>
+            </div>
+        `;
+
+        this.historyRecordsList.innerHTML = historyHtml + summaryHtml;
     }
 
     // 获取中文星期几

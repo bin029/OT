@@ -514,6 +514,86 @@ window.runTimeRecorderTests = function() {
             test.assert.isTrue(!!recorder.records['2025-02-01'], '2月1日（本周六）记录应保留');
         });
     });
+
+    test.describe('最近6个月加班记录', () => {
+        const recorder = new MockTimeRecorder();
+
+        // 添加获取最近6个月加班时间的方法
+        recorder.getLast6MonthsOvertime = function() {
+            const today = new Date();
+            const months = [];
+
+            for (let i = 0; i < 6; i++) {
+                const date = new Date(today);
+                date.setMonth(today.getMonth() - i);
+                const month = date.getMonth();
+                const year = date.getFullYear();
+
+                let totalMinutes = 0;
+                const dates = Object.keys(this.records);
+
+                dates.forEach(dateKey => {
+                    const recordDate = new Date(dateKey + 'T00:00:00');
+                    if (recordDate.getMonth() === month && recordDate.getFullYear() === year) {
+                        const dayRecords = this.records[dateKey];
+                        if (dayRecords) {
+                            totalMinutes += this.calculateOvertime(dayRecords, dateKey);
+                        }
+                    }
+                });
+
+                months.push({
+                    year: year,
+                    month: month,
+                    totalMinutes: totalMinutes
+                });
+            }
+
+            return months;
+        };
+
+        test.it('应正确计算最近6个月的加班时间', () => {
+            // 创建最近3个月的测试数据
+            recorder.records = {
+                '2025-01-15': createTestRecord('2025-01-15', '09:00', '19:30'), // 1月，60分钟
+                '2025-01-20': createTestRecord('2025-01-20', '09:00', '20:00'), // 1月，90分钟
+                '2025-02-05': createTestRecord('2025-02-05', '09:00', '19:00'), // 2月，30分钟
+                '2025-02-10': createTestRecord('2025-02-10', '09:00', '21:00'), // 2月，150分钟
+                '2025-03-01': createTestRecord('2025-03-01', '09:00', '18:30')  // 3月，0分钟
+            };
+
+            const months = recorder.getLast6MonthsOvertime();
+
+            // 应该返回6个月的数据
+            test.assert.equal(months.length, 6, '应返回6个月的数据');
+
+            // 验证数据格式
+            months.forEach(month => {
+                test.assert.isTrue(typeof month.year === 'number', '年份应为数字');
+                test.assert.isTrue(typeof month.month === 'number', '月份应为数字');
+                test.assert.isTrue(typeof month.totalMinutes === 'number', '总分钟数应为数字');
+            });
+        });
+
+        test.it('应正确统计每个月的加班时间总和', () => {
+            // 创建1月的多条记录
+            recorder.records = {
+                '2025-01-10': createTestRecord('2025-01-10', '09:00', '19:30'), // 60分钟
+                '2025-01-15': createTestRecord('2025-01-15', '09:00', '20:00'), // 90分钟
+                '2025-01-20': createTestRecord('2025-01-20', '09:00', '21:00')  // 150分钟
+            };
+
+            const months = recorder.getLast6MonthsOvertime();
+            const january = months.find(m => m.month === 0 && m.year === 2025); // 0表示1月
+
+            // 1月总加班时间应该是 60 + 90 + 150 = 300分钟
+            if (january) {
+                test.assert.equal(january.totalMinutes, 300, '1月总加班时间应为300分钟');
+            } else {
+                throw new Error('未找到1月的数据');
+            }
+        });
+    });
     });
 
     // 输出测试完成信息
