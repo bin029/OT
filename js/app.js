@@ -357,8 +357,8 @@ class TimeRecorder {
             }
         }
 
-        // 加上手动补录的加班时间（小时转换为分钟）
-        if (dayRecords.manualOvertime && dayRecords.manualOvertime > 0) {
+        // 加上手动补录的加班时间（小时转换为分钟，支持负数用于调休消耗）
+        if (dayRecords.manualOvertime !== undefined && dayRecords.manualOvertime !== null && dayRecords.manualOvertime !== 0) {
             totalOvertimeMinutes += dayRecords.manualOvertime * 60;
         }
 
@@ -470,7 +470,7 @@ class TimeRecorder {
                 if (dayRecords) {
                     const overtimeMinutes = this.calculateOvertime(dayRecords, dateKey);
                     const hasRecords = !!(dayRecords.first || dayRecords.last);
-                    const hasManualOvertime = !!(dayRecords.manualOvertime && dayRecords.manualOvertime > 0);
+                    const hasManualOvertime = !!(dayRecords.manualOvertime !== undefined && dayRecords.manualOvertime !== null && dayRecords.manualOvertime !== 0);
 
                     if (overtimeMinutes !== 0 || hasRecords || hasManualOvertime) { // 显示有任何记录的日期
                         monthRecords.push({
@@ -509,14 +509,17 @@ class TimeRecorder {
                     <div class="month-record-date">${dateLabel}</div>
                     <div class="month-record-overtime ${overtimeClass}">${overtimeDisplay}</div>`;
 
-            // 如果有手动补录记录，显示详细信息
-            if (record.manualOvertime > 0) {
+            // 如果有手动补录记录，显示详细信息（支持负数，表示调休消耗）
+            if (record.manualOvertime !== undefined && record.manualOvertime !== null && record.manualOvertime !== 0) {
                 const manualMinutes = record.manualOvertime * 60;
                 const manualDisplay = this.formatTimeDisplay(manualMinutes);
+                const isNegative = record.manualOvertime < 0;
+                const label = isNegative ? '调休消耗：' : '补录：';
+                const valueClass = isNegative ? 'manual-value-negative' : 'manual-value';
                 detailHtml += `
                     <div class="month-record-manual">
-                        <span class="manual-label">补录：</span>
-                        <span class="manual-value">${record.manualOvertime}小时 (${manualDisplay})</span>
+                        <span class="manual-label">${label}</span>
+                        <span class="manual-value ${valueClass}">${record.manualOvertime}小时 (${manualDisplay})</span>
                         <button class="delete-manual-btn" data-date="${dateStr}" title="删除补录记录">×</button>
                     </div>`;
             }
@@ -804,7 +807,8 @@ class TimeRecorder {
         }
 
         // 显示成功提示
-        alert('补录加班时间成功！');
+        const message = hours < 0 ? `调休消耗 ${Math.abs(hours)} 小时成功！` : `补录加班时间 ${hours} 小时成功！`;
+        alert(message);
     }
 
     // 验证补录输入数据
@@ -822,9 +826,9 @@ class TimeRecorder {
             return false;
         }
 
-        // 检查小时数
-        if (isNaN(hours) || hours < 0 || hours > 24) {
-            alert('请输入有效的加班小时数（0-24之间）');
+        // 检查小时数（支持负数，用于调休消耗）
+        if (isNaN(hours) || hours < -24 || hours > 24) {
+            alert('请输入有效的加班小时数（-24到24之间，负数表示调休消耗）');
             return false;
         }
 

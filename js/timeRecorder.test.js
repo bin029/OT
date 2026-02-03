@@ -135,8 +135,8 @@ class MockTimeRecorder {
             }
         }
 
-        // 加上手动补录的加班时间（小时转换为分钟）
-        if (dayRecords.manualOvertime && dayRecords.manualOvertime > 0) {
+        // 加上手动补录的加班时间（小时转换为分钟，支持负数用于调休消耗）
+        if (dayRecords.manualOvertime !== undefined && dayRecords.manualOvertime !== null && dayRecords.manualOvertime !== 0) {
             totalOvertimeMinutes += dayRecords.manualOvertime * 60;
         }
 
@@ -327,6 +327,27 @@ window.runTimeRecorderTests = function() {
             const record = createTestRecord(date, '09:00', '17:00', 4); // 周末工作8小时 + 补录4小时
             const overtime = recorder.calculateOvertime(record, date);
             test.assert.equal(overtime, 720, `日期: ${date} (${getDayOfWeek(date)})`);
+        });
+
+        test.it('负数补录（调休消耗）- 加班-120分钟', () => {
+            const date = '2025-01-20'; // 周一
+            const record = createTestRecord(date, null, null, -2); // 调休消耗2小时
+            const overtime = recorder.calculateOvertime(record, date);
+            test.assert.equal(overtime, -120, `日期: ${date} (${getDayOfWeek(date)})`);
+        });
+
+        test.it('自动打卡 + 负数补录（调休消耗）- 加班-60分钟', () => {
+            const date = '2025-01-20'; // 周一
+            const record = createTestRecord(date, '09:00', '19:30', -2); // 自动加班1小时 - 调休消耗2小时
+            const overtime = recorder.calculateOvertime(record, date);
+            test.assert.equal(overtime, -60, `日期: ${date} (${getDayOfWeek(date)})`);
+        });
+
+        test.it('负数补录抵消自动加班 - 加班0分钟', () => {
+            const date = '2025-01-20'; // 周一
+            const record = createTestRecord(date, '09:00', '19:30', -1); // 自动加班1小时 - 调休消耗1小时
+            const overtime = recorder.calculateOvertime(record, date);
+            test.assert.equal(overtime, 0, `日期: ${date} (${getDayOfWeek(date)})`);
         });
     });
 
