@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打卡场景测试验证</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+            font-size: 18px;
+        }
+        .test-case {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .test-case-title {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .test-case-details {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 5px 0;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .test-pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary h3 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        .summary-stats {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 打卡场景测试验证</h1>
+        <div id="testResults"></div>
+        <div id="summary" class="summary" style="display:none;">
+            <h3>测试总结</h3>
+            <div id="summaryStats" class="summary-stats"></div>
+        </div>
+    </div>
+
+    <script>
+        // 复制TimeRecorder的核心计算逻辑用于测试
+        class TestTimeRecorder {
+            constructor() {
+                this.workdayOverrides = {};
+            }
+
+            calculateTimeDifference(startTime, endTime) {
+                const diffMs = endTime.getTime() - startTime.getTime();
+                return Math.round(diffMs / (1000 * 60));
+            }
+
+            shouldCalculateAsWorkday(dateKey) {
+                const date = new Date(dateKey + 'T00:00:00');
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                    return true;
+                }
+                return this.workdayOverrides[dateKey] === true;
+            }
+
+            calculateOvertime(dayRecords, dateKey) {
+                const date = new Date(dateKey + 'T00:00:00');
+                let totalOvertimeMinutes = 0;
+
+                if (dayRecords.first && dayRecords.last) {
+                    const actualStartTime = new Date(dayRecords.first.date);
+                    const actualEndTime = new Date(dayRecords.last.date);
+
+                    if (this.shouldCalculateAsWorkday(dateKey)) {
+                        const standardStartTime = new Date(dateKey + 'T09:00:00');
+                        const overtimeStartTime = new Date(dateKey + 'T18:30:00');
+
+                        const overtimeAfter1830 = Math.max(0, this.calculateTimeDifference(overtimeStartTime, actualEndTime));
+                        const lateMinutes = Math.max(0, this.calculateTimeDifference(standardStartTime, actualStartTime));
+                        const hasReachedOvertimeStart = actualEndTime >= overtimeStartTime;
+
+                        if (hasReachedOvertimeStart) {
+                            totalOvertimeMinutes = overtimeAfter1830 - lateMinutes;
+                        } else {
+                            const earlyLeaveMinutes = Math.max(0, this.calculateTimeDifference(actualEndTime, overtimeStartTime));
+                            totalOvertimeMinutes = -earlyLeaveMinutes - lateMinutes;
+                        }
+                    } else {
+                        totalOvertimeMinutes = this.calculateTimeDifference(actualStartTime, actualEndTime);
+                    }
+                }
+
+                if (dayRecords.manualOvertime !== undefined && dayRecords.manualOvertime !== null && dayRecords.manualOvertime !== 0) {
+                    totalOvertimeMinutes += dayRecords.manualOvertime * 60;
+                }
+
+                return totalOvertimeMinutes;
+            }
+
+            formatTimeDisplay(minutes) {
+                const hours = Math.floor(Math.abs(minutes) / 60);
+                const mins = Math.abs(minutes) % 60;
+                const sign = minutes < 0 ? '-' : '';
+                return `${sign}${hours}:${String(mins).padStart(2, '0')}`;
+            }
+        }
+
+        function createTestRecord(dateStr, startTime, endTime, manualOvertime = 0) {
+            const record = {};
+            if (startTime) {
+                record.first = { date: new Date(`${dateStr}T${startTime}:00`) };
+            }
+            if (endTime) {
+                record.last = { date: new Date(`${dateStr}T${endTime}:00`) };
+            }
+            if (manualOvertime !== 0) {
+                record.manualOvertime = manualOvertime;
+            }
+            return record;
+        }
+
+        function getDayOfWeek(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            return days[date.getDay()];
+        }
+
+        const recorder = new TestTimeRecorder();
+        let passedTests = 0;
+        let failedTests = 0;
+
+        const testScenarios = [
+            {
+                category: '工作日正常场景',
+                tests: [
+                    {
+                        name: '准时上班准时下班 (9:00-18:30)',
+                        date: '2025-01-20',
+                        start: '09:00',
+                        end: '18:30',
+                        manual: 0,
+                        expected: 0,
+                        description: '标准工作时间，无加班'
+                    },
+                    {
+                        name: '准时上班加班1小时 (9:00-19:30)',
+                        date: '2025-01-20',
+                        start: '09:00',
+                        end: '19:30',
+                        manual: 0,
+                        expected: 60,
+                        description: '下班时间超过18:30，加班1小时'
+                    },
+                    {
+                        name: '准时上班加班2.5小时 (9:00-21:00)',
+                        date: '2025-01-20',
+                        start: '09:00',
+                        end: '21:00',
+                        manual: 0,
+                        expected: 150,
+                        description: '加班2.5小时'
+                    }
+                ]
+            },
+            {
+                category: '工作日迟到场景',
+                tests: [
+                    {
+                        name: '迟到1小时准时下班 (10:00-18:30)',
+                        date: '2025-01-20',
+                        start: '10:00',
+                        end: '18:30',
+                        manual: 0,
+                        expected: -60,
+                        description: '迟到1小时，扣除60分钟'
+                    },
+                    {
+                        name: '迟到30分钟加班1小时 (9:30-19:30)',
+                        date: '2025-01-20',
+                        start: '09:30',
+                        end: '19:30',
+                        manual: 0,
+                        expected: 30,
+                        description: '迟到30分钟，加班1小时，净加班30分钟'
+                    },
+                    {
+                        name: '用户提到的场景：迟到3小时早退1.5小时 (12:00-17:00)',
+                        date: '2025-01-20',
+                        start: '12:00',
+                        end: '17:00',
+                        manual: 0,
+                        expected: -270,
+                        description: '迟到3小时(180分钟) + 早退1.5小时(90分钟) = -270分钟'
+                    }
+                ]
+            },
+            {
+                category: '工作日早退场景',
+                tests: [
+                    {
+                        name: '准时上班早退1小时 (9:00-17:30)',
+                        date: '2025-01-20',
+                        start: '09:00',
+                        end: '17:30',
+                        manual: 0,
+                        expected: -60,
+                        description: '早退1小时，扣除60分钟'
+                    },
+                    {
+                        name: '迟到1小时早退30分钟 (10:00-18:00)',
+                        date: '2025-01-20',
+                        start: '10:00',
+                        end: '18:00',
+                        manual: 0,
+                        expected: -90,
+                        description: '迟到60分钟 + 早退30分钟 = -90分钟'
+                    }
+                ]
+            },
+            {
+                category: '周末场景',
+                tests: [
+                    {
+                        name: '周末工作8小时 (9:00-17:00)',
+                        date: '2025-01-18',
+                        start: '09:00',
+                        end: '17:00',
+                        manual: 0,
+                        expected: 480,
+                        description: '周末全天算加班，8小时 = 480分钟'
+                    },
+                    {
+                        name: '周末全天工作 (8:00-20:00)',
+                        date: '2025-01-19',
+                        start: '08:00',
+                        end: '20:00',
+                        manual: 0,
+                        expected: 720,
+                        description: '周末工作12小时 = 720分钟'
+                    }
+                ]
+            },
+            {
+                category: '手动补录场景',
+                tests: [
+                    {
+                        name: '只有手动补录2小时',
+                        date: '2025-01-20',
+                        start: null,
+                        end: null,
+                        manual: 2,
+                        expected: 120,
+                        description: '无打卡记录，补录2小时 = 120分钟'
+                    },
+                    {
+                        name: '自动打卡1小时 + 手动补录1小时',
+                        date: '2025-01-20',
+                        start: '09:00',
+                        end: '19:30',
+                        manual: 1,
+                        expected: 120,
+                        description: '自动60分钟 + 补录60分钟 = 120分钟'
+                    },
+                    {
+                        name: '负数补录（调休消耗）-2小时',
+                        date: '2025-01-20',
+                        start: null,
+                        end: null,
+                        manual: -2,
+                        expected: -120,
+                        description: '调休消耗2小时 = -120分钟'
+                    },
+                    {
+                        name: '自动打卡1小时 + 调休消耗2小时',
+                        date: '2025-01-20',
+                        start: '09:00',
+                        end: '19:30',
+                        manual: -2,
+                        expected: -60,
+                        description: '自动60分钟 - 调休120分钟 = -60分钟'
+                    },
+                    {
+                        name: '调休抵消自动加班',
+                        date: '2025-01-20',
+                        start: '09:00',
+                        end: '19:30',
+                        manual: -1,
+                        expected: 0,
+                        description: '自动60分钟 - 调休60分钟 = 0分钟'
+                    }
+                ]
+            },
+            {
+                category: '节假日调休日场景',
+                tests: [
+                    {
+                        name: '周末设置为调休日，按工作日规则计算',
+                        date: '2025-01-18',
+                        start: '09:00',
+                        end: '19:30',
+                        manual: 0,
+                        expected: 60,
+                        description: '调休日按工作日规则，加班1小时',
+                        isWorkdayOverride: true
+                    }
+                ]
+            }
+        ];
+
+        function runTests() {
+            const resultsDiv = document.getElementById('testResults');
+            let html = '';
+
+            testScenarios.forEach(section => {
+                html += `<div class="test-section">
+                    <h2>${section.category}</h2>`;
+
+                section.tests.forEach(test => {
+                    if (test.isWorkdayOverride) {
+                        recorder.workdayOverrides[test.date] = true;
+                    }
+
+                    const record = createTestRecord(test.date, test.start, test.end, test.manual);
+                    const actual = recorder.calculateOvertime(record, test.date);
+                    const passed = actual === test.expected;
+                    const display = recorder.formatTimeDisplay(actual);
+                    const expectedDisplay = recorder.formatTimeDisplay(test.expected);
+
+                    if (passed) {
+                        passedTests++;
+                    } else {
+                        failedTests++;
+                    }
+
+                    html += `
+                        <div class="test-case">
+                            <div class="test-case-title">${test.name}</div>
+                            <div class="test-case-details">
+                                <div>日期: ${test.date} (${getDayOfWeek(test.date)})</div>
+                                ${test.start ? `<div>上班: ${test.start}</div>` : ''}
+                                ${test.end ? `<div>下班: ${test.end}</div>` : ''}
+                                ${test.manual !== 0 ? `<div>补录: ${test.manual}小时</div>` : ''}
+                                <div>${test.description}</div>
+                            </div>
+                            <div class="test-result ${passed ? 'test-pass' : 'test-fail'}">
+                                ${passed ? '✅ 通过' : '❌ 失败'}<br>
+                                期望: ${expectedDisplay} (${test.expected}分钟)<br>
+                                实际: ${display} (${actual}分钟)
+                            </div>
+                        </div>
+                    `;
+
+                    if (test.isWorkdayOverride) {
+                        delete recorder.workdayOverrides[test.date];
+                    }
+                });
+
+                html += `</div>`;
+            });
+
+            resultsDiv.innerHTML = html;
+
+            // 显示总结
+            const summaryDiv = document.getElementById('summary');
+            const statsDiv = document.getElementById('summaryStats');
+            summaryDiv.style.display = 'block';
+            statsDiv.innerHTML = `
+                总计: ${passedTests + failedTests} 个测试<br>
+                ✅ 通过: ${passedTests} 个<br>
+                ❌ 失败: ${failedTests} 个<br>
+                通过率: ${((passedTests / (passedTests + failedTests)) * 100).toFixed(1)}%
+            `;
+        }
+
+        // 页面加载后自动运行测试
+        window.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>
