@@ -610,19 +610,7 @@ class TimeRecorder {
             `;
         }).join('');
 
-        // 计算6个月总计
-        const totalMinutes = months.reduce((sum, month) => sum + month.totalMinutes, 0);
-        const totalDisplay = this.formatTimeDisplay(totalMinutes);
-        const totalClass = this.getOvertimeClass(totalMinutes);
-
-        const summaryHtml = `
-            <div class="history-summary">
-                <h4>6个月总计</h4>
-                <div class="history-total ${totalClass}">${totalDisplay}</div>
-            </div>
-        `;
-
-        this.historyRecordsList.innerHTML = historyHtml + summaryHtml;
+        this.historyRecordsList.innerHTML = historyHtml;
     }
 
     // 获取中文星期几
