@@ -385,13 +385,20 @@ class TimeRecorder {
             currentWeekStart.setDate(today.getDate() - dayOfWeek + 1); // 本周一
         }
 
+        // 将本周开始时间设置为00:00:00，确保包含当天的所有记录
+        currentWeekStart.setHours(0, 0, 0, 0);
+
+        // 将今天的时间设置为23:59:59，确保包含今天的记录
+        const todayEnd = new Date(today);
+        todayEnd.setHours(23, 59, 59, 999);
+
         let totalMinutes = 0;
         const dates = Object.keys(this.records);
 
         dates.forEach(dateKey => {
             const recordDate = new Date(dateKey + 'T00:00:00');
-            // 检查是否在本周内
-            if (recordDate >= currentWeekStart && recordDate <= today) {
+            // 检查是否在本周内（使用正确的时间范围）
+            if (recordDate >= currentWeekStart && recordDate <= todayEnd) {
                 const dayRecords = this.records[dateKey];
                 if (dayRecords) {
                     totalMinutes += this.calculateOvertime(dayRecords, dateKey);

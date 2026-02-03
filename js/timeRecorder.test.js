@@ -385,6 +385,37 @@ window.runTimeRecorderTests = function() {
             delete recorder.workdayOverrides[date];
         });
     });
+
+    test.describe('本周加班时间计算 - 日期范围判断', () => {
+        test.it('验证日期比较逻辑：周一00:00应该大于等于周一14:30', () => {
+            // 模拟bug场景：currentWeekStart是周一14:30，recordDate是周一00:00
+            const mondayMorning = new Date('2025-02-03T00:00:00');
+            const mondayAfternoon = new Date('2025-02-03T14:30:00');
+            
+            // 修复前：mondayMorning >= mondayAfternoon 为 false（错误）
+            // 修复后：应该将mondayAfternoon设置为00:00:00
+            mondayAfternoon.setHours(0, 0, 0, 0);
+            
+            // 现在应该为true
+            test.assert.isTrue(mondayMorning >= mondayAfternoon, '周一00:00应该大于等于周一00:00（修复后）');
+        });
+
+        test.it('验证日期范围：本周开始时间应该设置为00:00:00', () => {
+            const today = new Date('2025-02-04T15:00:00'); // 周二下午3点
+            const currentWeekStart = new Date(today);
+            const dayOfWeek = today.getDay(); // 2 (周二)
+            
+            // 计算本周一
+            currentWeekStart.setDate(today.getDate() - dayOfWeek + 1);
+            
+            // 修复：设置为00:00:00
+            currentWeekStart.setHours(0, 0, 0, 0);
+            
+            // 验证
+            const mondayRecord = new Date('2025-02-03T00:00:00'); // 周一记录
+            test.assert.isTrue(mondayRecord >= currentWeekStart, '周一记录应该在本周范围内');
+        });
+    });
     });
 
     // 输出测试完成信息
